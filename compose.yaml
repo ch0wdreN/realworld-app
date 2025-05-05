@@ -1,0 +1,41 @@
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: dev
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./gradlew:/app/gradlew
+      - ./gradle:/app/gradle
+      - ./build.gradle.kts:/app/build.gradle.kts
+      - ./settings.gradle.kts:/app/settings.gradle.kts
+      - ./gradle.yaml:/app/gradle.yaml
+      - ./src:/app/src
+      - ./build:/app/build
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: postgres
+    image: postgres:17
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_DB: realworld
+      POSTGRES_PASSWORD: passw0rd
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  db:
