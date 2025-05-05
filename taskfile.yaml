@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Create and start containers
+    cmds:
+      - docker compose up -d
+
+  build:
+    desc: Monitor files with the extensions kt and kts and build them continuously
+    cmds:
+      - watchexec -e kt,kts -- docker exec -t app ./gradlew build
