@@ -1,0 +1,9 @@
+ktor:
+    application:
+        modules:
+            - io.ch0wdren.ModuleKt.module
+    development: true
+    deployment:
+        watch:
+            - classes
+        port: '8080'
