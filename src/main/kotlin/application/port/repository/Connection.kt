@@ -1,8 +1,8 @@
 package io.ch0wdren.application.port.repository
 
 data class Parameter(
-  val Name: String,
-  val Value: Any,
+  val name: String,
+  val value: Any,
 )
 
 interface RowMapper<T> {

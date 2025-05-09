@@ -10,7 +10,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import reactor.kotlin.core.publisher.toFlux
 
 fun Statement.bindAll(vararg params: Parameter): Statement {
-  params.forEach { it -> this.bind(it.Name, it.Value) }
+  params.forEach { it -> this.bind(it.name, it.value) }
   return this
 }
 
