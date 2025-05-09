@@ -33,6 +33,8 @@ dependencies {
   implementation(libs.r2dbc.spi)
   implementation(libs.r2dbc.postgres)
   implementation(libs.r2dbc.pool)
+  implementation(libs.kotlinx.coroutine.reactive)
+  implementation(libs.reactor.extension)
 
   testImplementation(libs.ktor.server.test.host)
   testImplementation(libs.kotlin.test.junit)

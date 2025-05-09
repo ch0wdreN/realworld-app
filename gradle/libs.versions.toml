@@ -8,6 +8,8 @@ r2dbc-spi-version = "1.0.0.RELEASE"
 r2dbc-postgres-version = "1.0.7.RELEASE"
 r2dbc-pool-version = "1.0.2.RELEASE"
 ktlint-version = "12.2.0"
+kotlinx-coroutine-reactive-version = "1.10.2"
+reactor-extension = "1.2.3"
 
 [libraries]
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin-version" }
@@ -25,6 +27,8 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc-spi-version" }
 r2dbc-postgres = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgres-version" }
 r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool-version" }
+kotlinx-coroutine-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinx-coroutine-reactive-version" }
+reactor-extension = { module = "io.projectreactor.kotlin:reactor-kotlin-extensions", version.ref = "reactor-extension" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
