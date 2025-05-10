@@ -1,0 +1,2 @@
+bucket = "realworld-app-dev-tfstate-bucket"
+prefix = "dev"
