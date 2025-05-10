@@ -10,3 +10,28 @@ tasks:
     desc: Monitor files with the extensions kt and kts and build them continuously
     cmds:
       - watchexec -e kt,kts -- docker exec -t app ./gradlew build
+
+  infra:migrate-state:
+    cmds:
+      - terraform -chdir=./infra init -backend-config="./config/$ENVIRONMENT.tfbackend" -migrate-state
+
+  infra:init:
+    cmds:
+      - terraform -chdir=./infra init -backend-config="./config/$ENVIRONMENT.tfbackend"
+
+  infra:deploy:
+    deps: [infra:init]
+    cmds:
+      - terraform -chdir=./infra apply -var-file=environments/$ENVIRONMENT/terraform.tfvars
+
+  infra:destroy:
+    cmds:
+      - terraform -chdir=./infra destroy -var-file=environments/$ENVIRONMENT/terraform.tfvars
+
+  infra:validate:
+    cmds:
+      - terraform -chdir=./infra validate
+
+  infra:fmt:
+    cmds:
+      - terraform -chdir=./infra fmt
