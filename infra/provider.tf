@@ -1,5 +1,7 @@
 terraform {
   backend "gcs" {
+    # The bucket value is intentionally left empty. It is overridden at runtime
+    # via the -backend-config flag in the backend configuration file.
     bucket = ""
     prefix = ""
   }
