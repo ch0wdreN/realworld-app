@@ -19,13 +19,16 @@ variable "project_name" {
 }
 
 variable "project_number" {
+  description = "Google Cloud Project Number (numeric identifier for the project)"
   type = string
 }
 
 variable "base_domain" {
+  description = "The base domain for the project (e.g., 'example.com')"
   type = string
 }
 
 variable "dns_zone_name" {
+  description = "The name of the Cloud DNS zone to be used."
   type = string
 }
