@@ -34,4 +34,4 @@ tasks:
 
   infra:fmt:
     cmds:
-      - terraform -chdir=./infra fmt
+      - terraform -chdir=./infra fmt -recursive .

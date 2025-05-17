@@ -1,0 +1,4 @@
+project = "realworld-app-000000"
+region = "asia-northeast1"
+zone = "asia-northeast1-a"
+project_name = "realworld-app"
