@@ -52,5 +52,5 @@ resource "google_compute_global_forwarding_rule" "lb_rule" {
   target                = google_compute_target_https_proxy.lb_https_proxy.self_link
   port_range            = "443"
   load_balancing_scheme = "EXTERNAL"
-  ip_address            = google_compute_global_address.lb_ip.self_link
+  ip_address            = google_compute_global_address.lb_ip.address
 }
