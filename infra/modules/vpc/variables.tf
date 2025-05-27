@@ -3,6 +3,10 @@ variable "project_name" {
   type        = string
 }
 
-variable "region" {
+variable "db_cidr" {
   type = string
+}
+
+variable "prefix_length" {
+  type = number
 }
