@@ -35,3 +35,12 @@ tasks:
   infra:fmt:
     cmds:
       - terraform -chdir=./infra fmt -recursive .
+
+  source:build-and-push:
+    cmds:
+      - ./scripts/build-and-push-image.sh
+
+  source:deploy:
+    deps: [source:build-and-push]
+    cmds:
+      - ./scripts/run-deploy.sh
