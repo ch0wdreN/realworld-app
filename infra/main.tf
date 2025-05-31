@@ -20,6 +20,8 @@ module "cloud_sql" {
   project_name         = var.project_name
   vpc                  = module.vpc.vpc_link
   password             = module.secrets.sql_user_password
+  db_name              = "realworld_db"
+  user_name            = "app_user"
 }
 
 module "repository" {
