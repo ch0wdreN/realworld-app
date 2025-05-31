@@ -20,8 +20,8 @@ module "cloud_sql" {
   project_name         = var.project_name
   vpc                  = module.vpc.vpc_link
   password             = module.secrets.sql_user_password
-  db_name              = "realworld_db"
-  user_name            = "app_user"
+  db_name              = var.db_name
+  user_name            = var.db_user
 }
 
 module "repository" {
@@ -47,13 +47,14 @@ module "cloud_run" {
   service_name             = "app"
   repository_name          = module.repository.repository_name
   port                     = 8080
-  project_number           = var.project_number
   connector_cidr           = "10.1.0.0/28"
   network                  = module.vpc.vpc_link
   project_name             = var.project_name
   sa_email                 = module.iam.run_sa_email
   instance_connection_name = module.cloud_sql.instance_connection_name
   sql_user_secret_id       = module.secrets.sql_user_secret
+  db_name                  = var.db_name
+  db_user                  = var.db_user
 }
 
 module "certificate" {

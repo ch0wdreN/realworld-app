@@ -34,7 +34,7 @@ resource "google_cloud_run_v2_service" "app" {
       env {
         name = "DB_USER"
         # ref. infra/modules/cloud_sql/main.tf  google_sql_user.postgres_user
-        value = "app_user"
+        value = var.db_user
       }
       env {
         name  = "DB_HOST"
@@ -46,7 +46,7 @@ resource "google_cloud_run_v2_service" "app" {
       }
       env {
         name  = "DB_NAME"
-        value = "realworld_db"
+        value = var.db_name
       }
       env {
         name = "DB_PASSWORD"

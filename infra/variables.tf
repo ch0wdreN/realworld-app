@@ -32,3 +32,11 @@ variable "dns_zone_name" {
   description = "The name of the Cloud DNS zone to be used."
   type        = string
 }
+
+variable "db_name" {
+  type = string
+}
+
+variable "db_user" {
+  type = string
+}

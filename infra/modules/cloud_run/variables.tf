@@ -42,6 +42,10 @@ variable "port" {
   type = number
 }
 
-variable "project_number" {
+variable "db_name" {
+  type = string
+}
+
+variable "db_user" {
   type = string
 }
