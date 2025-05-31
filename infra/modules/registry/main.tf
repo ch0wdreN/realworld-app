@@ -1,6 +1,9 @@
 resource "google_project_service" "registry" {
-  project = var.project_id
   service = "artifactregistry.googleapis.com"
+}
+
+resource "google_project_service" "scanning" {
+  service = "containerscanning.googleapis.com"
 }
 
 resource "google_artifact_registry_repository" "repository" {

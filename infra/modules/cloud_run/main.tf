@@ -1,3 +1,17 @@
+resource "google_project_service" "vpc_access" {
+  service = "vpcaccess.googleapis.com"
+}
+
+resource "google_vpc_access_connector" "connector" {
+  depends_on = [google_project_service.vpc_access]
+
+  name          = join("-", [var.project_name, "connector"])
+  ip_cidr_range = var.connector_cidr
+  network       = var.network
+  max_instances = 3
+  min_instances = 2
+}
+
 resource "google_project_service" "run" {
   service = "run.googleapis.com"
 }
@@ -13,17 +27,58 @@ resource "google_cloud_run_v2_service" "app" {
   template {
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.repository_name}/app:latest"
+      name  = "app"
       ports {
         container_port = var.port
       }
+      env {
+        name = "DB_USER"
+        value = var.db_user
+      }
+      env {
+        name  = "DB_HOST"
+        value = "127.0.0.1"
+      }
+      env {
+        name  = "DB_PORT"
+        value = "5432"
+      }
+      env {
+        name  = "DB_NAME"
+        value = var.db_name
+      }
+      env {
+        name = "DB_PASSWORD"
+        value_source {
+          secret_key_ref {
+            secret  = var.sql_user_secret_id
+            version = "latest"
+          }
+        }
+      }
       resources {
         limits = {
-          cpu    = "2"
-          memory = "1024Mi"
+          cpu    = "4"
+          memory = "2048Mi"
         }
         startup_cpu_boost = true
       }
     }
+    containers {
+      image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.16.0-bookworm"
+      name  = "sql-proxy"
+      args = [
+        "--address", "0.0.0.0",
+        "--port", "5432",
+        "--private-ip",
+        var.instance_connection_name,
+      ]
+    }
+    vpc_access {
+      connector = google_vpc_access_connector.connector.self_link
+      egress    = "ALL_TRAFFIC"
+    }
+    service_account = var.sa_email
   }
 }
 

@@ -1,3 +1,7 @@
-output "vpc" {
-  value = google_compute_network.vpc.network_id
+output "vpc_link" {
+  value = google_compute_network.vpc.self_link
+}
+
+output "private_ip_name" {
+  value = google_compute_global_address.db_address.name
 }
