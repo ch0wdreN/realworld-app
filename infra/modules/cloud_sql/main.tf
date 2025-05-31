@@ -2,6 +2,10 @@ resource "google_project_service" "service_networking" {
   service = "servicenetworking.googleapis.com"
 }
 
+resource "google_project_service" "cloud_sql_admin" {
+  service = "sqladmin.googleapis.com"
+}
+
 resource "google_service_networking_connection" "vpc_connection" {
   depends_on = [google_project_service.service_networking]
 
@@ -11,7 +15,7 @@ resource "google_service_networking_connection" "vpc_connection" {
 }
 
 resource "google_sql_database_instance" "postgres" {
-  depends_on = [google_service_networking_connection.vpc_connection]
+  depends_on = [google_service_networking_connection.vpc_connection, google_project_service.cloud_sql_admin]
 
   database_version    = "POSTGRES_17"
   name                = join("-", [var.project_name, "db-instance"])
