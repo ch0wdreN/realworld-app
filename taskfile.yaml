@@ -28,6 +28,10 @@ tasks:
     cmds:
       - terraform -chdir=./infra destroy -var-file=environments/$ENVIRONMENT/terraform.tfvars
 
+  infra:plan:
+    cmds:
+      - terraform -chdir=./infra plan -var-file=environments/$ENVIRONMENT/terraform.tfvars
+
   infra:validate:
     cmds:
       - terraform -chdir=./infra validate

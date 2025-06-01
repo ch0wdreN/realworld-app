@@ -33,7 +33,7 @@ resource "google_sql_database_instance" "postgres" {
 
 resource "google_sql_database" "db" {
   instance = google_sql_database_instance.postgres.id
-  name     =var.db_name
+  name     = var.db_name
 }
 
 resource "google_sql_user" "postgres_user" {

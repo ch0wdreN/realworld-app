@@ -32,7 +32,7 @@ resource "google_cloud_run_v2_service" "app" {
         container_port = var.port
       }
       env {
-        name = "DB_USER"
+        name  = "DB_USER"
         value = var.db_user
       }
       env {
