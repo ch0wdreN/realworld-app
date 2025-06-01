@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 : "${PROJECT_NAME:?PROJECT_NAME is not set}"
-: "${PROJECT_ID:?PROJECT_ID is not set}"
 
 SECRET="${PROJECT_NAME}-sql-user-secret"
 PASSWORD=$(gcloud secrets versions access latest --secret="${SECRET}")
