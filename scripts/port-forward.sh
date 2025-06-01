@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 : "${PROJECT_NAME:?PROJECT_NAME is not set}"
+: "${PROJECT_ID:?PROJECT_ID is not set}"
 
 INSTANCE="${PROJECT_NAME}-db-instance"
 CONNECTION_NAME=$(gcloud sql instances list --format='json' | jq -r ".[] | select(.name == \"${INSTANCE}\") | .connectionName")
