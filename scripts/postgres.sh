@@ -13,4 +13,6 @@ cat <<EOF > "${HOME}/.pgpass"
 ${HOST}:${PORT}:${DB}:${USER}:${PASSWORD}
 EOF
 
+chmod 600 "${HOME}/.pgpass"
+
 pgcli -U "${USER}" --host "${HOST}" --port "${PORT}" -d "${DB}"
