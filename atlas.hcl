@@ -1,5 +1,6 @@
 env "local" {
-  url = "postgres://admin:passw0rd@:5432/realworld?sslmode=disable"
+  # https://atlasgo.io/atlas-schema/projects#getenv
+  url = getenv("LOCAL_DB_URL")
   migration {
     dir = "file://migrations"
   }
