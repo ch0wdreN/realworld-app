@@ -29,13 +29,16 @@ variable "dns_zone_name" {
 }
 
 variable "db_name" {
+  description = "The name of the Cloud SQL database to be used."
   type = string
 }
 
 variable "db_user" {
+  description = "The name of the Cloud SQL user to be used."
   type = string
 }
 
 variable "my_email" {
+  description = "My email address"
   type = string
 }
