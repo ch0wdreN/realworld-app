@@ -9,3 +9,7 @@ variable "project_id" {
 variable "secret_id" {
   type = string
 }
+
+variable "my_email" {
+  type = string
+}
