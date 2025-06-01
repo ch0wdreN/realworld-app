@@ -18,11 +18,6 @@ variable "project_name" {
   type        = string
 }
 
-variable "project_number" {
-  description = "Google Cloud Project Number (numeric identifier for the project)"
-  type        = string
-}
-
 variable "base_domain" {
   description = "The base domain for the project (e.g., 'example.com')"
   type        = string
@@ -38,5 +33,9 @@ variable "db_name" {
 }
 
 variable "db_user" {
+  type = string
+}
+
+variable "my_email" {
   type = string
 }
