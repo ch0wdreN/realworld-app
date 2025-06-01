@@ -4,6 +4,7 @@ module "vpc" {
   project_name  = var.project_name
   db_cidr       = "10.0.0.0"
   prefix_length = 16
+  bastion_cidr  = "10.10.0.0/16"
 }
 
 module "secrets" {
@@ -37,6 +38,7 @@ module "iam" {
   project_name = var.project_name
   project_id   = var.project
   secret_id    = module.secrets.sql_user_secret
+  my_email     = var.my_email
 }
 
 module "cloud_run" {
@@ -80,4 +82,13 @@ module "cloud_dns" {
   lb_sub_domain = "api.${var.base_domain}"
   zone          = var.dns_zone_name
   lb_ip         = module.load_balancer.lb_ip
+}
+
+module "bastion" {
+  source = "./modules/compute_engine"
+
+  project_name = var.project_name
+  subnetwork   = module.vpc.bastion_subnet
+  sa_email     = module.iam.bastion_sa_email
+  vpc          = module.vpc.vpc_link
 }

@@ -2,14 +2,14 @@ variable "project_name" {
   type = string
 }
 
-variable "project_id" {
+variable "vpc" {
   type = string
 }
 
-variable "secret_id" {
+variable "subnetwork" {
   type = string
 }
 
-variable "my_email" {
+variable "sa_email" {
   type = string
 }
