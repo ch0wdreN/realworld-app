@@ -5,8 +5,11 @@ data class Parameter(
   val value: Any,
 )
 
-interface RowMapper<T> {
-  fun map(row: Any): T
+interface Row {
+  fun <T> get(
+    column: String,
+    type: Class<T>,
+  ): T
 }
 
 interface Connection {
@@ -23,13 +26,13 @@ interface Connection {
 
   suspend fun <T> queryRow(
     sql: String,
-    mapper: RowMapper<T>,
+    mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<T>
 
   suspend fun <T> query(
     sql: String,
-    mapper: RowMapper<T>,
+    mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<List<T>>
 }

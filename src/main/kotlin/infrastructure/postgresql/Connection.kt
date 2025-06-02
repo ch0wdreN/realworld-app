@@ -2,12 +2,21 @@ package io.ch0wdren.infrastructure.postgresql
 
 import io.ch0wdren.application.port.repository.Connection
 import io.ch0wdren.application.port.repository.Parameter
-import io.ch0wdren.application.port.repository.RowMapper
+import io.ch0wdren.application.port.repository.Row
 import io.r2dbc.spi.Statement
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import reactor.kotlin.core.publisher.toFlux
+
+private class Row(
+  private val row: io.r2dbc.spi.Row,
+) : Row {
+  override fun <T> get(
+    column: String,
+    type: Class<T>,
+  ): T = row.get(column, type)!!
+}
 
 fun Statement.bindAll(vararg params: Parameter): Statement {
   params.forEach { it -> this.bind(it.name, it.value) }
@@ -47,7 +56,7 @@ class Connection(
 
   override suspend fun <T> queryRow(
     sql: String,
-    mapper: RowMapper<T>,
+    mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<T> =
     try {
@@ -58,7 +67,7 @@ class Connection(
           .execute()
           .awaitFirst()
 
-      val result = row.map { row, _ -> mapper.map(row) }.awaitSingle()
+      val result = row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
 
       Result.success(result)
     } catch (e: Exception) {
@@ -67,7 +76,7 @@ class Connection(
 
   override suspend fun <T> query(
     sql: String,
-    mapper: RowMapper<T>,
+    mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<List<T>> =
     try {
@@ -79,7 +88,7 @@ class Connection(
           .toFlux()
       val results =
         rows
-          .flatMap { result -> result.map { row, _ -> mapper.map(row) } }
+          .flatMap { result -> result.map { row, _ -> mapper(Row(row)) } }
           .collectList()
           .awaitSingle()
 
