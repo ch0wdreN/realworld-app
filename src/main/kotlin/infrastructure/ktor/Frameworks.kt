@@ -1,5 +1,6 @@
-package io.ch0wdren
+package io.ch0wdren.infrastructure.ktor
 
+import io.ch0wdren.infrastructure.postgresql.ConnectionPool
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import org.koin.dsl.module
@@ -11,10 +12,8 @@ fun Application.configureFrameworks() {
     slf4jLogger()
     modules(
       module {
-        single<HelloService> {
-          HelloService {
-            println(environment.log.info("Hello, World!"))
-          }
+        single {
+          ConnectionPool()
         }
       },
     )
