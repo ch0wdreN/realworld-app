@@ -4,12 +4,12 @@ import io.ch0wdren.application.port.usecase.UserUsecase
 import io.ch0wdren.infrastructure.postgresql.ConnectionPool
 import io.ch0wdren.infrastructure.postgresql.UserRepositoryImpl
 import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val factoryModule =
   module {
-    factoryOf(::ServiceFactory) {
+    singleOf(::ServiceFactory) {
       bind<UserServiceFactory>()
     }
   }
