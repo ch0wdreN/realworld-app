@@ -6,7 +6,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
 import kotlinx.coroutines.reactive.awaitSingle
 
-class ConnectionPool {
+object ConnectionPool {
   private val pool: ConnectionPool
 
   init {
