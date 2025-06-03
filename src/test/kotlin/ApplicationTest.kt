@@ -1,5 +1,6 @@
 package io.ch0wdren
 
+import io.ch0wdren.infrastructure.ktor.module
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
