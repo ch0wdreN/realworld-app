@@ -18,7 +18,7 @@ class UserRepositoryImpl : UserRepository {
         bio,
         image
       FROM
-        user
+        public.user
       WHERE
         email = $1
       """.trimIndent(),
