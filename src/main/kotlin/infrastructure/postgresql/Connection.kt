@@ -85,6 +85,22 @@ class Connection(
       row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
     }
 
+  override suspend fun <T> queryRowOrNull(
+    sql: String,
+    mapper: (Row) -> T,
+    vararg params: Parameter,
+  ): Result<T?> =
+    resultOf {
+      val row =
+        conn
+          .createStatement(sql)
+          .bindAll(*params)
+          .execute()
+          .awaitFirst()
+
+      row.map { row, _ -> mapper(Row(row)) }.awaitFirstOrNull()
+    }
+
   override suspend fun <T> query(
     sql: String,
     mapper: (Row) -> T,
