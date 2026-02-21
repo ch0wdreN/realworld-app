@@ -2,7 +2,7 @@ package io.ch0wdren.application.port.repository
 
 data class Parameter(
   val name: String,
-  val value: Any,
+  val value: Any?,
 )
 
 interface Row {
@@ -29,6 +29,12 @@ interface Connection {
     mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<T>
+
+  suspend fun <T> queryRowOrNull(
+    sql: String,
+    mapper: (Row) -> T,
+    vararg params: Parameter,
+  ): Result<T?>
 
   suspend fun <T> query(
     sql: String,
