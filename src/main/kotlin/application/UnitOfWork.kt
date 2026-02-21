@@ -2,10 +2,10 @@ package io.ch0wdren.application
 
 import io.ch0wdren.application.port.repository.Connection
 
-class UnitOfWork<T>(
+class UnitOfWork(
   private val conn: Connection,
 ) {
-  suspend fun transactional(
+  suspend fun <T> transactional(
     f: suspend (tx: Connection) -> Result<T>,
   ): Result<T> {
     conn.beginTransaction().getOrElse {
