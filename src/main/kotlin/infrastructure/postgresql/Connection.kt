@@ -8,6 +8,7 @@ import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import reactor.kotlin.core.publisher.toFlux
+import kotlin.coroutines.cancellation.CancellationException
 
 private class Row(
   private val row: io.r2dbc.spi.Row,
@@ -18,6 +19,16 @@ private class Row(
   ): T = row.get(column, type)!!
 }
 
+// Safe Result creation function that re-throws CancellationException
+inline fun <T> resultOf(block: () -> T): Result<T> =
+  try {
+    Result.success(block())
+  } catch (e: CancellationException) {
+    throw e // Must always re-throw coroutine cancellation
+  } catch (e: Exception) {
+    Result.failure(e)
+  }
+
 fun Statement.bindAll(vararg params: Parameter): Statement {
   params.forEach { it -> this.bind(it.name, it.value) }
   return this
@@ -26,32 +37,36 @@ fun Statement.bindAll(vararg params: Parameter): Statement {
 class Connection(
   private val conn: io.r2dbc.spi.Connection,
 ) : Connection {
-  override fun beginTransaction() {
-    conn.beginTransaction()
-  }
+  override suspend fun beginTransaction(): Result<Unit> =
+    resultOf {
+      conn.beginTransaction().awaitFirstOrNull()
+      Unit
+    }
 
-  override fun commitTransaction() {
-    conn.commitTransaction()
-  }
+  override suspend fun commitTransaction(): Result<Unit> =
+    resultOf {
+      conn.commitTransaction().awaitFirstOrNull()
+      Unit
+    }
 
-  override fun rollbackTransaction() {
-    conn.rollbackTransaction()
-  }
+  override suspend fun rollbackTransaction(): Result<Unit> =
+    resultOf {
+      conn.rollbackTransaction().awaitFirstOrNull()
+      Unit
+    }
 
   override suspend fun execute(
     sql: String,
     vararg params: Parameter,
   ): Result<Unit> =
-    try {
+    resultOf {
       conn
         .createStatement(sql)
         .bindAll(*params)
         .execute()
         .awaitFirstOrNull()
 
-      Result.success(Unit)
-    } catch (e: Exception) {
-      Result.failure(e)
+      Unit
     }
 
   override suspend fun <T> queryRow(
@@ -59,7 +74,7 @@ class Connection(
     mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<T> =
-    try {
+    resultOf {
       val row =
         conn
           .createStatement(sql)
@@ -67,11 +82,7 @@ class Connection(
           .execute()
           .awaitFirst()
 
-      val result = row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
-
-      Result.success(result)
-    } catch (e: Exception) {
-      Result.failure(e)
+      row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
     }
 
   override suspend fun <T> query(
@@ -79,21 +90,17 @@ class Connection(
     mapper: (Row) -> T,
     vararg params: Parameter,
   ): Result<List<T>> =
-    try {
+    resultOf {
       val rows =
         conn
           .createStatement(sql)
           .bindAll(*params)
           .execute()
           .toFlux()
-      val results =
-        rows
-          .flatMap { result -> result.map { row, _ -> mapper(Row(row)) } }
-          .collectList()
-          .awaitSingle()
 
-      Result.success(results)
-    } catch (e: Exception) {
-      Result.failure(e)
+      rows
+        .flatMap { result -> result.map { row, _ -> mapper(Row(row)) } }
+        .collectList()
+        .awaitSingle()
     }
 }

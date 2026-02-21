@@ -8,15 +8,24 @@ class UnitOfWork<T>(
   suspend fun transactional(
     f: suspend (tx: Connection) -> Result<T>,
   ): Result<T> {
-    conn.beginTransaction()
-
-    val result = f(conn)
-    if (result.isSuccess) {
-      conn.commitTransaction()
-    } else {
-      conn.rollbackTransaction()
+    conn.beginTransaction().getOrElse {
+      return Result.failure(it)
     }
 
-    return result
+    return try {
+      val result = f(conn)
+      if (result.isSuccess) {
+        conn.commitTransaction().getOrElse { error ->
+          conn.rollbackTransaction()
+          return Result.failure(error)
+        }
+      } else {
+        conn.rollbackTransaction()
+      }
+      result
+    } catch (e: Exception) {
+      conn.rollbackTransaction()
+      Result.failure(e)
+    }
   }
 }

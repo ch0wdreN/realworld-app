@@ -13,11 +13,11 @@ interface Row {
 }
 
 interface Connection {
-  fun beginTransaction()
+  suspend fun beginTransaction(): Result<Unit>
 
-  fun commitTransaction()
+  suspend fun commitTransaction(): Result<Unit>
 
-  fun rollbackTransaction()
+  suspend fun rollbackTransaction(): Result<Unit>
 
   suspend fun execute(
     sql: String,

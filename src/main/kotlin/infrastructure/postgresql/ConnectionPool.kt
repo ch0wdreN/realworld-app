@@ -27,7 +27,10 @@ object ConnectionPool {
         .builder()
         .connectionFactory(connectionFactory)
         .maxSize(20)
-        .maxIdleTime(java.time.Duration.ofMillis(1000))
+        .initialSize(5)
+        .maxIdleTime(java.time.Duration.ofMinutes(10))
+        .maxLifeTime(java.time.Duration.ofHours(1))
+        .maxAcquireTime(java.time.Duration.ofSeconds(3))
         .build()
 
     pool = ConnectionPool(connectionPoolConfig)
