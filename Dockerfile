@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1
-FROM eclipse-temurin:21-jdk AS dev
+FROM eclipse-temurin:23-jdk AS dev
 
 WORKDIR /app
 
@@ -15,10 +15,10 @@ RUN --mount=type=bind,source=gradlew,target=gradlew \
     --mount=type=bind,source=src,target=src \
     ./gradlew buildFatJar
 
-FROM gcr.io/distroless/java21-debian12:nonroot AS runtime
+FROM gcr.io/distroless/java23-debian12:nonroot AS runtime
 
 WORKDIR /
 
 COPY --from=build /app/build/libs/app.jar app.jar
 
-ENTRYPOINT ["java","-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-Xms512m", "-Xmx1g", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-Xms512m", "-Xmx1g", "-jar", "app.jar"]

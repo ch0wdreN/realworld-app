@@ -8,6 +8,10 @@ plugins {
 group = "io.ch0wdren"
 version = "0.0.1"
 
+kotlin {
+  jvmToolchain(23)
+}
+
 application {
   mainClass.set("io.ktor.server.netty.EngineMain")
 
