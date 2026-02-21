@@ -30,6 +30,7 @@ dependencies {
   implementation(libs.ktor.server.core)
   implementation(libs.ktor.serialization.kotlinx.json)
   implementation(libs.ktor.server.auth)
+  implementation(libs.ktor.server.auth.jwt)
   implementation(libs.ktor.server.swagger)
   implementation(libs.ktor.server.netty)
   implementation(libs.ktor.server.logging)
@@ -40,6 +41,8 @@ dependencies {
   implementation(libs.r2dbc.pool)
   implementation(libs.kotlinx.coroutine.reactive)
   implementation(libs.reactor.extension)
+  implementation(libs.kotlinx.datetime)
+  implementation(libs.bcrypt)
 
   testImplementation(libs.ktor.server.test.host)
   testImplementation(libs.kotlin.test.junit)
