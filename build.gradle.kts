@@ -28,6 +28,7 @@ dependencies {
   implementation(libs.ktor.server.auth)
   implementation(libs.ktor.server.swagger)
   implementation(libs.ktor.server.netty)
+  implementation(libs.ktor.server.logging)
   implementation(libs.logback.classic)
   implementation(libs.ktor.server.config.yaml)
   implementation(libs.r2dbc.spi)

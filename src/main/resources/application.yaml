@@ -1,7 +1,7 @@
 ktor:
     application:
         modules:
-            - io.ch0wdren.ModuleKt.module
+            - io.ch0wdren.infrastructure.ktor.ModuleKt.module
     development: true
     deployment:
         watch:
