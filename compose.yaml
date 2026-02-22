@@ -29,6 +29,12 @@ services:
         condition: service_healthy
       jaeger:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/healthx"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   db:
     container_name: postgres
