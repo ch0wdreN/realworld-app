@@ -8,7 +8,6 @@ import io.ch0wdren.application.port.usecase.TagUsecase
 import io.ch0wdren.application.port.usecase.UserUsecase
 import io.ch0wdren.infrastructure.postgresql.ArticleRepositoryImpl
 import io.ch0wdren.infrastructure.postgresql.CommentRepositoryImpl
-import io.ch0wdren.infrastructure.postgresql.ConnectionPool
 import io.ch0wdren.infrastructure.postgresql.ProfileRepositoryImpl
 import io.ch0wdren.infrastructure.postgresql.TagRepositoryImpl
 import io.ch0wdren.infrastructure.postgresql.UserRepositoryImpl
@@ -53,45 +52,33 @@ class ServiceFactory :
   ArticleServiceFactory,
   CommentServiceFactory,
   TagServiceFactory {
-  private val pool = ConnectionPool
-
-  override suspend fun createUserService(): UserUsecase {
-    val conn = pool.getConnection()
-    return UserService(
-      UnitOfWork(conn),
+  override suspend fun createUserService(): UserUsecase =
+    UserService(
+      UnitOfWork(),
       UserRepositoryImpl(),
     )
-  }
 
-  override suspend fun createProfileService(): ProfileUsecase {
-    val conn = pool.getConnection()
-    return ProfileService(
-      UnitOfWork(conn),
+  override suspend fun createProfileService(): ProfileUsecase =
+    ProfileService(
+      UnitOfWork(),
       ProfileRepositoryImpl(),
     )
-  }
 
-  override suspend fun createArticleService(): ArticleUsecase {
-    val conn = pool.getConnection()
-    return ArticleService(
-      UnitOfWork(conn),
+  override suspend fun createArticleService(): ArticleUsecase =
+    ArticleService(
+      UnitOfWork(),
       ArticleRepositoryImpl(),
     )
-  }
 
-  override suspend fun createCommentService(): CommentUsecase {
-    val conn = pool.getConnection()
-    return CommentService(
-      UnitOfWork(conn),
+  override suspend fun createCommentService(): CommentUsecase =
+    CommentService(
+      UnitOfWork(),
       CommentRepositoryImpl(),
     )
-  }
 
-  override suspend fun createTagService(): TagUsecase {
-    val conn = pool.getConnection()
-    return TagService(
-      UnitOfWork(conn),
+  override suspend fun createTagService(): TagUsecase =
+    TagService(
+      UnitOfWork(),
       TagRepositoryImpl(),
     )
-  }
 }
