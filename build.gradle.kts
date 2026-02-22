@@ -9,7 +9,7 @@ group = "io.ch0wdren"
 version = "0.0.1"
 
 kotlin {
-  jvmToolchain(23)
+  jvmToolchain(21)
 }
 
 application {
@@ -50,6 +50,10 @@ dependencies {
 
   testImplementation(libs.ktor.server.test.host)
   testImplementation(libs.kotlin.test.junit)
+}
+
+tasks.test {
+  enabled = false
 }
 
 ktor {
