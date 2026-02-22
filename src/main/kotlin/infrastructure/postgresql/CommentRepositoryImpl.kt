@@ -49,23 +49,23 @@ class CommentRepositoryImpl : CommentRepository {
     authorEmail: String,
     body: String,
   ): Result<Comment> {
-    val commentId =
-      conn
-        .queryRow(
-          """
-          INSERT INTO public.comment
-            (body, article_slug, author_email,
-             created_at, updated_at)
-          VALUES ($1, $2, $3, NOW(), NOW())
-          RETURNING id
-          """.trimIndent(),
-          { row -> row.get("id", Int::class.java) },
-          Parameter("$1", body),
-          Parameter("$2", articleSlug),
-          Parameter("$3", authorEmail),
-        ).getOrElse {
-          return Result.failure(it)
-        }
+     val commentId =
+       conn
+         .queryRow(
+           """
+           INSERT INTO public.comment
+             (body, article_slug, author_email,
+              created_at, updated_at)
+           VALUES ($1, $2, $3, NOW(), NOW())
+           RETURNING id
+           """.trimIndent(),
+           { row -> row.get("id", Int::class.java)!! },
+           Parameter("$1", body),
+           Parameter("$2", articleSlug),
+           Parameter("$3", authorEmail),
+         ).getOrElse {
+           return Result.failure(it)
+         }
 
     return conn.queryRowOrNull(
       """
@@ -98,24 +98,24 @@ class CommentRepositoryImpl : CommentRepository {
     commentId: Int,
     userEmail: String,
   ): Result<Unit> {
-    val authorEmail =
-      conn
-        .queryRowOrNull(
-          """
-          SELECT author_email
-          FROM public.comment
-          WHERE id = $1
-          """.trimIndent(),
-          { row ->
-            row.get("author_email", String::class.java)
-          },
-          Parameter("$1", commentId),
-        ).getOrElse {
-          return Result.failure(it)
-        }
-        ?: return Result.failure(
-          Exception("Comment not found"),
-        )
+     val authorEmail =
+       conn
+         .queryRowOrNull(
+           """
+           SELECT author_email
+           FROM public.comment
+           WHERE id = $1
+           """.trimIndent(),
+           { row ->
+             row.get("author_email", String::class.java)!!
+           },
+           Parameter("$1", commentId),
+         ).getOrElse {
+           return Result.failure(it)
+         }
+         ?: return Result.failure(
+           Exception("Comment not found"),
+         )
 
     if (authorEmail != userEmail) {
       return Result.failure(
@@ -132,26 +132,26 @@ class CommentRepositoryImpl : CommentRepository {
     )
   }
 
-  private fun mapRowToComment(row: Row): Comment =
-    Comment(
-      id = row.get("id", Int::class.java),
-      body = row.get("body", String::class.java),
-      createdAt =
-        Instant.parse(
-          row.get("created_at", String::class.java),
-        ),
-      updatedAt =
-        Instant.parse(
-          row.get("updated_at", String::class.java),
-        ),
-      author =
-        Profile(
-          userName =
-            row.get("user_name", String::class.java),
-          bio = row.get("bio", String::class.java),
-          image = row.get("image", String::class.java),
-          following =
-            row.get("following", Boolean::class.java),
-        ),
-    )
+    private fun mapRowToComment(row: Row): Comment =
+      Comment(
+        id = row.get("id", Int::class.java)!!,
+        body = row.get("body", String::class.java)!!,
+        createdAt =
+          Instant.parse(
+            row.get("created_at", String::class.java)!!.replace(" ", "T"),
+          ),
+        updatedAt =
+          Instant.parse(
+            row.get("updated_at", String::class.java)!!.replace(" ", "T"),
+          ),
+        author =
+          Profile(
+            userName =
+              row.get("user_name", String::class.java)!!,
+            bio = row.get("bio", String::class.java),
+            image = row.get("image", String::class.java),
+            following =
+              row.get("following", Boolean::class.java)!!,
+          ),
+      )
 }

@@ -9,10 +9,10 @@ interface Row {
   fun <T> get(
     column: String,
     type: Class<T>,
-  ): T
+  ): T?
 }
 
-interface Connection {
+interface Connection : AutoCloseable {
   suspend fun beginTransaction(): Result<Unit>
 
   suspend fun commitTransaction(): Result<Unit>

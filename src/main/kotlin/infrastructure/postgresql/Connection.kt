@@ -3,10 +3,13 @@ package io.ch0wdren.infrastructure.postgresql
 import io.ch0wdren.application.port.repository.Connection
 import io.ch0wdren.application.port.repository.Parameter
 import io.ch0wdren.application.port.repository.Row
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.trace.StatusCode
 import io.r2dbc.spi.Statement
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.runBlocking
 import reactor.kotlin.core.publisher.toFlux
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -16,7 +19,7 @@ private class Row(
   override fun <T> get(
     column: String,
     type: Class<T>,
-  ): T = row.get(column, type)!!
+  ): T? = row.get(column, type)
 }
 
 // Safe Result creation function that re-throws CancellationException
@@ -30,13 +33,26 @@ inline fun <T> resultOf(block: () -> T): Result<T> =
   }
 
 fun Statement.bindAll(vararg params: Parameter): Statement {
-  params.forEach { it -> this.bind(it.name, it.value) }
+  params.forEach { param ->
+    if (param.value == null) {
+      this.bindNull(param.name, String::class.java)
+    } else {
+      this.bind(param.name, param.value)
+    }
+  }
   return this
 }
 
 class Connection(
   private val conn: io.r2dbc.spi.Connection,
 ) : Connection {
+  private val tracer = GlobalOpenTelemetry.getTracer("io.ch0wdren.Connection")
+
+  override fun close() {
+    runBlocking {
+      conn.close().awaitFirstOrNull()
+    }
+  }
   override suspend fun beginTransaction(): Result<Unit> =
     resultOf {
       conn.beginTransaction().awaitFirstOrNull()
@@ -64,6 +80,8 @@ class Connection(
         .createStatement(sql)
         .bindAll(*params)
         .execute()
+        .toFlux()
+        .flatMap { it.rowsUpdated }
         .awaitFirstOrNull()
 
       Unit
@@ -73,33 +91,55 @@ class Connection(
     sql: String,
     mapper: (Row) -> T,
     vararg params: Parameter,
-  ): Result<T> =
-    resultOf {
-      val row =
-        conn
-          .createStatement(sql)
-          .bindAll(*params)
-          .execute()
-          .awaitFirst()
+  ): Result<T> {
+    val span = tracer.spanBuilder("Connection.queryRow").startSpan()
+    return try {
+      span.setAttribute("sql.query", sql)
+      span.setAttribute("sql.params.count", params.size.toLong())
+      resultOf {
+        val row =
+          conn
+            .createStatement(sql)
+            .bindAll(*params)
+            .execute()
+            .awaitFirst()
 
-      row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
+        row.map { row, _ -> mapper(Row(row)) }.awaitSingle()
+      }
+    } catch (e: Exception) {
+      span.setStatus(StatusCode.ERROR, "Exception in queryRow: ${e.message}")
+      throw e
+    } finally {
+      span.end()
     }
+  }
 
   override suspend fun <T> queryRowOrNull(
     sql: String,
     mapper: (Row) -> T,
     vararg params: Parameter,
-  ): Result<T?> =
-    resultOf {
-      val row =
-        conn
-          .createStatement(sql)
-          .bindAll(*params)
-          .execute()
-          .awaitFirst()
+  ): Result<T?> {
+    val span = tracer.spanBuilder("Connection.queryRowOrNull").startSpan()
+    return try {
+      span.setAttribute("sql.query", sql)
+      span.setAttribute("sql.params.count", params.size.toLong())
+      resultOf {
+        val row =
+          conn
+            .createStatement(sql)
+            .bindAll(*params)
+            .execute()
+            .awaitFirst()
 
-      row.map { row, _ -> mapper(Row(row)) }.awaitFirstOrNull()
+        row.map { row, _ -> mapper(Row(row)) }.awaitFirstOrNull()
+      }
+    } catch (e: Exception) {
+      span.setStatus(StatusCode.ERROR, "Exception in queryRowOrNull: ${e.message}")
+      throw e
+    } finally {
+      span.end()
     }
+  }
 
   override suspend fun <T> query(
     sql: String,
