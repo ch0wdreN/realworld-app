@@ -43,7 +43,7 @@ class UserHandler(
       service.register(payload.user).getOrElse {
         call.respond(
           HttpStatusCode.UnprocessableEntity,
-          mapOf("errors" to mapOf("body" to listOf(it.message))),
+          mapOf("errors" to mapOf("body" to listOf(it.message ?: it.toString()))),
         )
         return
       }
