@@ -1,0 +1,48 @@
+desc: Tags operations
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+vars:
+  test_email: tags-test@example.com
+  test_username: tagsuser
+  test_password: Password123!
+
+steps:
+  register_user:
+    desc: Register user for tag testing
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.test_username }}"
+                email: "{{ vars.test_email }}"
+                password: "{{ vars.test_password }}"
+    test: steps.register_user.res.status == 201
+
+  create_article_with_tags:
+    desc: Create article with tags
+    req:
+      /api/articles:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json:
+              article:
+                title: "Article with tags"
+                description: "Testing tags"
+                body: "Content"
+                tagList: ["runn", "e2e", "testing"]
+    test: |
+      steps.create_article_with_tags.res.status == 201 &&
+      len(steps.create_article_with_tags.res.body.article.tagList) == 3
+
+  get_tags:
+    desc: Get all tags
+    req:
+      /api/tags:
+        get: {}
+    test: |
+      steps.get_tags.res.status == 200 &&
+      len(steps.get_tags.res.body.tags) > 0

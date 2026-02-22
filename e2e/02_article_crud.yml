@@ -1,0 +1,111 @@
+desc: Article CRUD operations
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+vars:
+  test_email: articletest@example.com
+  test_username: articleuser
+  test_password: Password123!
+  article_title: Test Article
+  article_description: This is a test article description
+  article_body: This is the body of the test article with some content.
+
+steps:
+  register_user:
+    desc: Register user for article testing
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.test_username }}"
+                email: "{{ vars.test_email }}"
+                password: "{{ vars.test_password }}"
+    test: steps.register_user.res.status == 201
+
+  create_article:
+    desc: Create a new article
+    req:
+      /api/articles:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json:
+              article:
+                title: "{{ vars.article_title }}"
+                description: "{{ vars.article_description }}"
+                body: "{{ vars.article_body }}"
+                tagList: ["test", "e2e"]
+    test: |
+      steps.create_article.res.status == 201 &&
+      steps.create_article.res.body.article.title == vars.article_title &&
+      steps.create_article.res.body.article.slug != ""
+
+  get_article:
+    desc: Get article by slug
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}:
+        get: {}
+    test: |
+      steps.get_article.res.status == 200 &&
+      steps.get_article.res.body.article.title == vars.article_title
+
+  update_article:
+    desc: Update article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}:
+        put:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json:
+              article:
+                body: "Updated article body"
+    test: |
+      steps.update_article.res.status == 200 &&
+      steps.update_article.res.body.article.body == "Updated article body"
+
+  list_articles:
+    desc: List all articles
+    req:
+      /api/articles:
+        get: {}
+    test: |
+      steps.list_articles.res.status == 200 &&
+      len(steps.list_articles.res.body.articles) > 0
+
+  favorite_article:
+    desc: Favorite an article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}/favorite:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json: {}
+    test: |
+      steps.favorite_article.res.status == 200 &&
+      steps.favorite_article.res.body.article.favorited == true
+
+  unfavorite_article:
+    desc: Unfavorite an article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}/favorite:
+        delete:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json: {}
+    test: |
+      steps.unfavorite_article.res.status == 200 &&
+      steps.unfavorite_article.res.body.article.favorited == false
+
+  delete_article:
+    desc: Delete article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}:
+        delete:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+    test: steps.delete_article.res.status == 200

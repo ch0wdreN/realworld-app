@@ -1,0 +1,72 @@
+desc: Article comments operations
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+vars:
+  test_email: commenttest@example.com
+  test_username: commentuser
+  test_password: Password123!
+  article_title: Article for Comments
+
+steps:
+  register_user:
+    desc: Register user for comment testing
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.test_username }}"
+                email: "{{ vars.test_email }}"
+                password: "{{ vars.test_password }}"
+    test: steps.register_user.res.status == 201
+
+  create_article:
+    desc: Create article to comment on
+    req:
+      /api/articles:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json:
+              article:
+                title: "{{ vars.article_title }}"
+                description: "Article for comment testing"
+                body: "Content"
+                tagList: []
+    test: steps.create_article.res.status == 201
+
+  create_comment:
+    desc: Add comment to article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}/comments:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+          body:
+            application/json:
+              comment:
+                body: "This is a test comment"
+    test: |
+      steps.create_comment.res.status == 201 &&
+      steps.create_comment.res.body.comment.body == "This is a test comment" &&
+      steps.create_comment.res.body.comment.id != 0
+
+  get_comments:
+    desc: Get all comments for article
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}/comments:
+        get: {}
+    test: |
+      steps.get_comments.res.status == 200 &&
+      len(steps.get_comments.res.body.comments) > 0
+
+  delete_comment:
+    desc: Delete comment
+    req:
+      /api/articles/{{ steps.create_article.res.body.article.slug }}/comments/{{ steps.create_comment.res.body.comment.id }}:
+        delete:
+          headers:
+            Authorization: "Token {{ steps.register_user.res.body.user.token }}"
+    test: steps.delete_comment.res.status == 200
