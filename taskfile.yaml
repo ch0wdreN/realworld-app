@@ -1,4 +1,7 @@
-version: '3'
+version: "3"
+
+env:
+  LOCAL_DB_URL: "postgres://admin:passw0rd@localhost:5432/realworld?sslmode=disable"
 
 tasks:
   up:
@@ -10,6 +13,42 @@ tasks:
     desc: Monitor files with the extensions kt and kts and build them continuously
     cmds:
       - watchexec -e kt,kts -- docker exec -t app ./gradlew build
+
+  e2e:clean:
+    desc: Clean database before E2E tests
+    cmds:
+      - psql "$LOCAL_DB_URL" -c "TRUNCATE TABLE \"user\", article, comment, favorite, follow, tag, article_tag CASCADE;"
+
+  e2e:
+    desc: Run E2E tests with runn
+    deps: [e2e:clean]
+    cmds:
+      - runn run e2e/*.yml
+
+  e2e:watch:
+    desc: Watch and run E2E tests on changes
+    cmds:
+      - watchexec -e yml -- runn run e2e/*.yml
+
+  migrate:diff:
+    desc: Generate new migration from schema changes
+    cmds:
+      - atlas schema diff --env local
+
+  migrate:apply:
+    desc: Apply schema to database
+    cmds:
+      - atlas schema apply --env local
+
+  migrate:status:
+    desc: Check schema status
+    cmds:
+      - atlas schema inspect --env local
+
+  migrate:validate:
+    desc: Validate schema files
+    cmds:
+      - atlas schema fmt --env local
 
   infra:migrate-state:
     cmds:
