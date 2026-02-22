@@ -1,0 +1,13 @@
+desc: Health check endpoint verification
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+
+steps:
+  health_check:
+    desc: Verify health endpoint returns OK
+    req:
+      /api/healthx:
+        get: {}
+    test: |
+      steps.health_check.res.status == 200 &&
+      steps.health_check.res.body.status == "UP"

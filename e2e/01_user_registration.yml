@@ -1,0 +1,65 @@
+desc: User registration and authentication flow
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+vars:
+  test_email: test@example.com
+  test_username: testuser
+  test_password: Password123!
+
+steps:
+  register:
+    desc: Register a new user
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.test_username }}"
+                email: "{{ vars.test_email }}"
+                password: "{{ vars.test_password }}"
+    test: |
+      steps.register.res.status == 201 &&
+      steps.register.res.body.user.email == vars.test_email &&
+      steps.register.res.body.user.username == vars.test_username
+
+  login:
+    desc: Login with registered credentials
+    req:
+      /api/users/login:
+        post:
+          body:
+            application/json:
+              user:
+                email: "{{ vars.test_email }}"
+                password: "{{ vars.test_password }}"
+    test: |
+      steps.login.res.status == 200 &&
+      steps.login.res.body.user.email == vars.test_email &&
+      steps.login.res.body.user.token != ""
+
+  get_current_user:
+    desc: Get current user with token
+    req:
+      /api/user:
+        get:
+          headers:
+            Authorization: "Token {{ steps.login.res.body.user.token }}"
+    test: |
+      steps.get_current_user.res.status == 200 &&
+      steps.get_current_user.res.body.user.email == vars.test_email
+
+  update_user:
+    desc: Update user profile
+    req:
+      /api/user:
+        put:
+          headers:
+            Authorization: "Token {{ steps.login.res.body.user.token }}"
+          body:
+            application/json:
+              user:
+                bio: "Updated bio for testing"
+    test: |
+      steps.update_user.res.status == 200 &&
+      steps.update_user.res.body.user.bio == "Updated bio for testing"

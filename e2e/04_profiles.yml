@@ -1,0 +1,82 @@
+desc: User profile and follow operations
+runners:
+  req: ${API_ENDPOINT:-http://localhost:8080}
+vars:
+  user1_email: profileuser1@example.com
+  user1_username: profileuser1
+  user1_password: Password123!
+  user2_email: profileuser2@example.com
+  user2_username: profileuser2
+  user2_password: Password123!
+
+steps:
+  register_user1:
+    desc: Register first user
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.user1_username }}"
+                email: "{{ vars.user1_email }}"
+                password: "{{ vars.user1_password }}"
+    test: steps.register_user1.res.status == 201
+
+  register_user2:
+    desc: Register second user
+    req:
+      /api/users:
+        post:
+          body:
+            application/json:
+              user:
+                username: "{{ vars.user2_username }}"
+                email: "{{ vars.user2_email }}"
+                password: "{{ vars.user2_password }}"
+    test: steps.register_user2.res.status == 201
+
+  get_profile_unauthenticated:
+    desc: Get user profile without authentication
+    req:
+      /api/profiles/{{ vars.user2_username }}:
+        get: {}
+    test: |
+      steps.get_profile_unauthenticated.res.status == 200 &&
+      steps.get_profile_unauthenticated.res.body.profile.username == vars.user2_username &&
+      steps.get_profile_unauthenticated.res.body.profile.following == false
+
+  follow_user:
+    desc: User1 follows User2
+    req:
+      /api/profiles/{{ vars.user2_username }}/follow:
+        post:
+          headers:
+            Authorization: "Token {{ steps.register_user1.res.body.user.token }}"
+          body:
+            application/json: {}
+    test: |
+      steps.follow_user.res.status == 200 &&
+      steps.follow_user.res.body.profile.following == true
+
+  get_profile_authenticated:
+    desc: Get profile after following
+    req:
+      /api/profiles/{{ vars.user2_username }}:
+        get:
+          headers:
+            Authorization: "Token {{ steps.register_user1.res.body.user.token }}"
+    test: |
+      steps.get_profile_authenticated.res.status == 200 &&
+      steps.get_profile_authenticated.res.body.profile.following == true
+
+  unfollow_user:
+    desc: User1 unfollows User2
+    req:
+      /api/profiles/{{ vars.user2_username }}/follow:
+        delete:
+          headers:
+            Authorization: "Token {{ steps.register_user1.res.body.user.token }}"
+    test: |
+      steps.unfollow_user.res.status == 200 &&
+      steps.unfollow_user.res.body.profile.following == false
