@@ -7,6 +7,16 @@ import io.ch0wdren.application.port.repository.Row
 import io.ch0wdren.domain.Article
 import io.ch0wdren.domain.Profile
 import kotlinx.datetime.Instant
+import java.util.UUID
+
+internal data class ArticleInsertResult(
+  val slug: String,
+  val title: String,
+  val description: String,
+  val body: String,
+  val createdAt: Instant,
+  val updatedAt: Instant,
+)
 
 class ArticleRepositoryImpl : ArticleRepository {
   override suspend fun listArticles(
@@ -18,43 +28,41 @@ class ArticleRepositoryImpl : ArticleRepository {
     limit: Int,
     offset: Int,
   ): Result<List<Article>> {
+    val joins = mutableListOf<String>()
     val conditions = mutableListOf<String>()
     val params = mutableListOf<Parameter>()
     var idx = 1
 
-    params.add(Parameter("\$${idx++}", currentUserEmail))
+    params.add(Parameter("$${idx++}", currentUserEmail))
 
     if (tag != null) {
-      conditions.add(
+      joins.add(
         """
-        EXISTS (
-          SELECT 1 FROM public.article_tag at2
-          WHERE at2.article_slug = a.slug
-          AND at2.tag_name = ${"$"}$idx
-        )
+        INNER JOIN public.article_tag at
+          ON at.article_slug = a.slug
         """.trimIndent(),
       )
-      params.add(Parameter("\$${idx++}", tag))
+      conditions.add("at.tag_name = $$idx")
+      params.add(Parameter("$${idx++}", tag))
     }
     if (author != null) {
-      conditions.add("u.user_name = ${"$"}$idx")
-      params.add(Parameter("\$${idx++}", author))
+      conditions.add("u.user_name = $$idx")
+      params.add(Parameter("$${idx++}", author))
     }
     if (favoritedBy != null) {
-      conditions.add(
+      joins.add(
         """
-        EXISTS (
-          SELECT 1 FROM public.favorite fav2
-          JOIN public.user u2
-            ON u2.email = fav2.user_email
-          WHERE fav2.article_slug = a.slug
-          AND u2.user_name = ${"$"}$idx
-        )
+        INNER JOIN public.favorite fav
+          ON fav.article_slug = a.slug
+        INNER JOIN public.user u_fav
+          ON u_fav.email = fav.user_email
         """.trimIndent(),
       )
-      params.add(Parameter("\$${idx++}", favoritedBy))
+      conditions.add("u_fav.user_name = $$idx")
+      params.add(Parameter("$${idx++}", favoritedBy))
     }
 
+    val joinClause = if (joins.isEmpty()) "" else joins.joinToString(" ")
     val whereClause =
       if (conditions.isEmpty()) {
         ""
@@ -89,12 +97,13 @@ class ArticleRepositoryImpl : ArticleRepository {
       FROM public.article a
       JOIN public.user u
         ON u.email = a.author_email
+      $joinClause
       LEFT JOIN public.follow fl
         ON fl.followee_email = a.author_email
-        AND fl.follower_email = ${"$"}1
+        AND fl.follower_email = $1
       LEFT JOIN public.favorite fv
         ON fv.article_slug = a.slug
-        AND fv.user_email = ${"$"}1
+        AND fv.user_email = $1
       LEFT JOIN (
         SELECT article_slug, COUNT(*) AS cnt
         FROM public.favorite
@@ -108,15 +117,15 @@ class ArticleRepositoryImpl : ArticleRepository {
         FROM public.article_tag at3
         GROUP BY at3.article_slug
       ) tl ON tl.article_slug = a.slug
-      WHERE 1 = 1
+      WHERE TRUE
       $whereClause
       ORDER BY a.created_at DESC
-      LIMIT ${"$"}${idx++}
-      OFFSET ${"$"}$idx
+      LIMIT $$idx
+      OFFSET $${idx + 1}
       """.trimIndent()
 
-    params.add(Parameter("\$${idx - 1}", limit))
-    params.add(Parameter("\$$idx", offset))
+    params.add(Parameter("$${idx++}", limit))
+    params.add(Parameter("$${idx}", offset))
 
     return conn.query(
       sql,
@@ -131,41 +140,39 @@ class ArticleRepositoryImpl : ArticleRepository {
     author: String?,
     favoritedBy: String?,
   ): Result<Int> {
+    val joins = mutableListOf<String>()
     val conditions = mutableListOf<String>()
     val params = mutableListOf<Parameter>()
     var idx = 1
 
     if (tag != null) {
-      conditions.add(
+      joins.add(
         """
-        EXISTS (
-          SELECT 1 FROM public.article_tag at2
-          WHERE at2.article_slug = a.slug
-          AND at2.tag_name = ${"$"}$idx
-        )
+        INNER JOIN public.article_tag at
+          ON at.article_slug = a.slug
         """.trimIndent(),
       )
-      params.add(Parameter("\$${idx++}", tag))
+      conditions.add("at.tag_name = $$idx")
+      params.add(Parameter("$${idx++}", tag))
     }
     if (author != null) {
-      conditions.add("u.user_name = ${"$"}$idx")
-      params.add(Parameter("\$${idx++}", author))
+      conditions.add("u.user_name = $$idx")
+      params.add(Parameter("$${idx++}", author))
     }
     if (favoritedBy != null) {
-      conditions.add(
+      joins.add(
         """
-        EXISTS (
-          SELECT 1 FROM public.favorite fav2
-          JOIN public.user u2
-            ON u2.email = fav2.user_email
-          WHERE fav2.article_slug = a.slug
-          AND u2.user_name = ${"$"}$idx
-        )
+        INNER JOIN public.favorite fav
+          ON fav.article_slug = a.slug
+        INNER JOIN public.user u_fav
+          ON u_fav.email = fav.user_email
         """.trimIndent(),
       )
-      params.add(Parameter("\$${idx++}", favoritedBy))
+      conditions.add("u_fav.user_name = $$idx")
+      params.add(Parameter("$${idx++}", favoritedBy))
     }
 
+    val joinClause = if (joins.isEmpty()) "" else joins.joinToString(" ")
     val whereClause =
       if (conditions.isEmpty()) {
         ""
@@ -179,13 +186,14 @@ class ArticleRepositoryImpl : ArticleRepository {
       FROM public.article a
       JOIN public.user u
         ON u.email = a.author_email
-      WHERE 1 = 1
+      $joinClause
+      WHERE TRUE
       $whereClause
       """.trimIndent()
 
     return conn.queryRow(
       sql,
-      { row -> row.get("cnt", Long::class.java).toInt() },
+      { row -> row.get("cnt", Long::class.java)!!.toInt() },
       *params.toTypedArray(),
     )
   }
@@ -254,13 +262,13 @@ class ArticleRepositoryImpl : ArticleRepository {
   ): Result<Int> =
     conn.queryRow(
       """
-      SELECT COUNT(*) AS cnt
-      FROM public.article a
-      JOIN public.follow fl
-        ON fl.followee_email = a.author_email
-        AND fl.follower_email = $1
-      """.trimIndent(),
-      { row -> row.get("cnt", Long::class.java).toInt() },
+       SELECT COUNT(*) AS cnt
+       FROM public.article a
+       JOIN public.follow fl
+         ON fl.followee_email = a.author_email
+         AND fl.follower_email = $1
+       """.trimIndent(),
+      { row -> row.get("cnt", Long::class.java)!!.toInt() },
       Parameter("$1", currentUserEmail),
     )
 
@@ -331,14 +339,16 @@ class ArticleRepositoryImpl : ArticleRepository {
     authorEmail: String,
     tagList: List<String>,
   ): Result<Article> {
-    conn
-      .execute(
+    val insertedArticle = conn
+      .queryRow(
         """
         INSERT INTO public.article
           (slug, title, description, body, author_email,
            created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        RETURNING slug, title, description, body, author_email, created_at, updated_at
         """.trimIndent(),
+        { row -> mapRow<ArticleInsertResult>(row) },
         Parameter("$1", slug),
         Parameter("$2", title),
         Parameter("$3", description),
@@ -376,12 +386,35 @@ class ArticleRepositoryImpl : ArticleRepository {
         }
     }
 
-    return getArticle(conn, slug, authorEmail).let { result ->
-      result.getOrElse {
-        return Result.failure(it)
-      }?.let { Result.success(it) }
-        ?: Result.failure(Exception("Article not found"))
+    val author = conn.queryRow(
+      "SELECT user_name, bio, image FROM public.user WHERE email = $1",
+      { row: Row ->
+        Profile(
+          userName = row.get("user_name", String::class.java)!!,
+          bio = row.get("bio", String::class.java),
+          image = row.get("image", String::class.java),
+          following = false,
+        )
+      },
+      Parameter("$1", authorEmail),
+    ).getOrElse {
+      return Result.failure(it)
     }
+
+    return Result.success(
+      Article(
+        slug = insertedArticle.slug,
+        title = insertedArticle.title,
+        description = insertedArticle.description,
+        body = insertedArticle.body,
+        tagList = tagList,
+        createdAt = insertedArticle.createdAt,
+        updatedAt = insertedArticle.updatedAt,
+        favorited = false,
+        favoritesCount = 0,
+        author = author,
+      )
+    )
   }
 
   override suspend fun updateArticle(
@@ -455,33 +488,32 @@ class ArticleRepositoryImpl : ArticleRepository {
       }
 
     return Article(
-      slug = row.get("slug", String::class.java),
-      title = row.get("title", String::class.java),
+      slug = row.get("slug", String::class.java)!!,
+      title = row.get("title", String::class.java)!!,
       description =
-        row.get("description", String::class.java),
-      body = row.get("body", String::class.java),
+        row.get("description", String::class.java)!!,
+      body = row.get("body", String::class.java)!!,
       tagList = tags,
       createdAt =
         Instant.parse(
-          row.get("created_at", String::class.java),
+          row.get("created_at", String::class.java)!!.replace(" ", "T"),
         ),
       updatedAt =
         Instant.parse(
-          row.get("updated_at", String::class.java),
+          row.get("updated_at", String::class.java)!!.replace(" ", "T"),
         ),
       favorited =
-        row.get("favorited", Boolean::class.java),
+        row.get("favorited", Boolean::class.java)!!,
       favoritesCount =
-        row.get("favorites_count", Long::class.java)
-          .toInt(),
+        row.get("favorites_count", Long::class.java)!!.toInt(),
       author =
         Profile(
           userName =
-            row.get("user_name", String::class.java),
+            row.get("user_name", String::class.java)!!,
           bio = row.get("bio", String::class.java),
           image = row.get("image", String::class.java),
           following =
-            row.get("following", Boolean::class.java),
+            row.get("following", Boolean::class.java)!!,
         ),
     )
   }
