@@ -6,13 +6,16 @@ services:
       dockerfile: ./Dockerfile
       target: dev
     ports:
-      - '8080:8080'
+      - "8080:8080"
     environment:
       DB_HOST: db
       DB_USER: admin
       DB_PASSWORD: passw0rd
       DB_NAME: realworld
       DB_PORT: 5432
+      OTEL_SERVICE_NAME: realworld-app
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http
     volumes:
       - ./gradlew:/app/gradlew
       - ./gradle:/app/gradle
@@ -24,12 +27,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      jaeger:
+        condition: service_started
 
   db:
     container_name: postgres
     image: postgres:17
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_DB: realworld
@@ -37,11 +42,20 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 10s
       retries: 5
       start_period: 5s
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.76.0
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
 
 volumes:
   db:

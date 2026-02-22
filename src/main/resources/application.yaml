@@ -7,3 +7,8 @@ ktor:
         watch:
             - classes
         port: '$PORT:8080'
+
+# OpenTelemetry configuration via environment variables:
+# OTEL_SERVICE_NAME - Service name for traces (default: realworld-app)
+# OTEL_EXPORTER_OTLP_ENDPOINT - OTLP collector endpoint (default: http://localhost:4318)
+# OTEL_EXPORTER_OTLP_PROTOCOL - Protocol: http or grpc (default: http)

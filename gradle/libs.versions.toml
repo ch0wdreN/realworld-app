@@ -12,6 +12,8 @@ kotlinx-coroutine-reactive-version = "1.10.2"
 reactor-extension = "1.2.3"
 kotlinx-datetime-version = "0.6.1"
 bcrypt-version = "0.10.2"
+opentelemetry-version = "1.52.0"
+opentelemetry-instrumentation-version = "2.16.0-alpha"
 
 [libraries]
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin-version" }
@@ -35,6 +37,10 @@ kotlinx-coroutine-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 reactor-extension = { module = "io.projectreactor.kotlin:reactor-kotlin-extensions", version.ref = "reactor-extension" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime-version" }
 bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt-version" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry-version" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "opentelemetry-version" }
+opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp", version.ref = "opentelemetry-version" }
+opentelemetry-instrumentation-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0", version.ref = "opentelemetry-instrumentation-version" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }

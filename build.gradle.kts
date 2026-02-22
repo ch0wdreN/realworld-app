@@ -43,6 +43,10 @@ dependencies {
   implementation(libs.reactor.extension)
   implementation(libs.kotlinx.datetime)
   implementation(libs.bcrypt)
+  implementation(libs.opentelemetry.api)
+  implementation(libs.opentelemetry.sdk)
+  implementation(libs.opentelemetry.exporter.otlp)
+  implementation(libs.opentelemetry.instrumentation.ktor)
 
   testImplementation(libs.ktor.server.test.host)
   testImplementation(libs.kotlin.test.junit)
