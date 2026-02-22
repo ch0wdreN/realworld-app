@@ -5,8 +5,11 @@ import io.ch0wdren.infrastructure.ktor.handler.CommentHandler
 import io.ch0wdren.infrastructure.ktor.handler.ProfileHandler
 import io.ch0wdren.infrastructure.ktor.handler.TagHandler
 import io.ch0wdren.infrastructure.ktor.handler.UserHandler
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
+import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -23,6 +26,9 @@ fun Application.configureRouting() {
   val tagHandler by inject<TagHandler>()
   routing {
     route("/api") {
+      get("/healthx") {
+        call.respond(HttpStatusCode.OK, mapOf("status" to "UP"))
+      }
       route("/users") {
         post {
           userHandler.register(call)
@@ -42,8 +48,10 @@ fun Application.configureRouting() {
         }
       }
       route("/profiles/{username}") {
-        get {
-          profileHandler.getProfile(call)
+        authenticate("auth-jwt", optional = true) {
+          get {
+            profileHandler.getProfile(call)
+          }
         }
         authenticate("auth-jwt") {
           post("/follow") {

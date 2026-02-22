@@ -10,6 +10,7 @@ import io.ktor.server.auth.jwt.jwt
 fun Application.configureSecurity() {
   install(Authentication) {
     jwt("auth-jwt") {
+      authSchemes("Token", "Bearer")
       verifier(JwtUtil.verifier())
       validate { credential ->
         if (credential.payload.getClaim("email").asString() != null) {
