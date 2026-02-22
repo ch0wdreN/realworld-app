@@ -5,9 +5,12 @@ import io.ch0wdren.application.port.repository.Parameter
 import io.ch0wdren.application.port.repository.Row
 import io.ch0wdren.application.port.repository.UserRepository
 import io.ch0wdren.domain.User
+import io.opentelemetry.api.GlobalOpenTelemetry
+import io.opentelemetry.api.trace.StatusCode
 import kotlinx.datetime.Instant
 
 class UserRepositoryImpl : UserRepository {
+  private val tracer = GlobalOpenTelemetry.getTracer("io.ch0wdren.UserRepository")
   override suspend fun getUser(
     conn: Connection,
     email: String,
@@ -28,83 +31,117 @@ class UserRepositoryImpl : UserRepository {
       WHERE
         email = $1
       """.trimIndent(),
-      ::mapRowToUser,
+      { row -> mapRow<User>(row) },
       Parameter("$1", email),
     )
 
   override suspend fun findByEmail(
     conn: Connection,
     email: String,
-  ): Result<User?> =
-    conn.queryRowOrNull(
-      """
-      SELECT
-        email,
-        user_name,
-        password,
-        bio,
-        image,
-        token,
-        created_at,
-        updated_at
-      FROM
-        public.user
-      WHERE
-        email = $1
-      """.trimIndent(),
-      ::mapRowToUser,
-      Parameter("$1", email),
-    )
+  ): Result<User?> {
+    val span = tracer.spanBuilder("UserRepository.findByEmail").startSpan()
+    return try {
+      span.setAttribute("user.email", email)
+      span.setAttribute("sql.query", "SELECT * FROM public.user WHERE email = $1")
+      conn.queryRowOrNull(
+        """
+        SELECT
+          email,
+          user_name,
+          password,
+          bio,
+          image,
+          token,
+          created_at,
+          updated_at
+        FROM
+          public.user
+        WHERE
+          email = $1
+        """.trimIndent(),
+        { row -> mapRow<User>(row) },
+        Parameter("$1", email),
+      )
+    } catch (e: Exception) {
+      span.setStatus(StatusCode.ERROR, "Exception in findByEmail: ${e.message}")
+      throw e
+    } finally {
+      span.end()
+    }
+  }
 
   override suspend fun findByUsername(
     conn: Connection,
     username: String,
-  ): Result<User?> =
-    conn.queryRowOrNull(
-      """
-      SELECT
-        email,
-        user_name,
-        password,
-        bio,
-        image,
-        token,
-        created_at,
-        updated_at
-      FROM
-        public.user
-      WHERE
-        user_name = $1
-      """.trimIndent(),
-      ::mapRowToUser,
-      Parameter("$1", username),
-    )
+  ): Result<User?> {
+    val span = tracer.spanBuilder("UserRepository.findByUsername").startSpan()
+    return try {
+      span.setAttribute("user.username", username)
+      span.setAttribute("sql.query", "SELECT * FROM public.user WHERE user_name = $1")
+      conn.queryRowOrNull(
+        """
+        SELECT
+          email,
+          user_name,
+          password,
+          bio,
+          image,
+          token,
+          created_at,
+          updated_at
+        FROM
+          public.user
+        WHERE
+          user_name = $1
+        """.trimIndent(),
+        { row -> mapRow<User>(row) },
+        Parameter("$1", username),
+      )
+    } catch (e: Exception) {
+      span.setStatus(StatusCode.ERROR, "Exception in findByUsername: ${e.message}")
+      throw e
+    } finally {
+      span.end()
+    }
+  }
 
   override suspend fun createUser(
     conn: Connection,
     email: String,
     userName: String,
     password: String,
-  ): Result<User> =
-    conn.queryRow(
-      """
-      INSERT INTO public.user (email, user_name, password, bio, image, token, created_at, updated_at)
-      VALUES ($1, $2, $3, NULL, NULL, NULL, NOW(), NOW())
-      RETURNING
-        email,
-        user_name,
-        password,
-        bio,
-        image,
-        token,
-        created_at,
-        updated_at
-      """.trimIndent(),
-      ::mapRowToUser,
-      Parameter("$1", email),
-      Parameter("$2", userName),
-      Parameter("$3", password),
-    )
+  ): Result<User> {
+    val span = tracer.spanBuilder("UserRepository.createUser").startSpan()
+    return try {
+      span.setAttribute("user.email", email)
+      span.setAttribute("user.username", userName)
+      span.setAttribute("sql.query", "INSERT INTO public.user (email, user_name, password, ...) VALUES ($1, $2, $3, ...)")
+      conn.queryRow(
+        """
+        INSERT INTO public.user (email, user_name, password, bio, image, token, created_at, updated_at)
+        VALUES ($1, $2, $3, NULL, NULL, NULL, NOW(), NOW())
+        RETURNING
+          email,
+          user_name,
+          password,
+          bio,
+          image,
+          token,
+          created_at,
+          updated_at
+        """.trimIndent(),
+        { row -> mapRow<User>(row) },
+        Parameter("$1", email),
+        Parameter("$2", userName),
+        Parameter("$3", password),
+      )
+    } catch (e: Exception) {
+      span.setStatus(StatusCode.ERROR, "Exception in createUser: ${e.message}")
+      throw e
+    } finally {
+      span.end()
+    }
+  }
 
   override suspend fun updateUser(
     conn: Connection,
@@ -135,23 +172,11 @@ class UserRepositoryImpl : UserRepository {
         created_at,
         updated_at
       """.trimIndent(),
-      ::mapRowToUser,
+      { row -> mapRow<User>(row) },
       Parameter("$1", email),
       Parameter("$2", userName),
       Parameter("$3", bio),
       Parameter("$4", image),
       Parameter("$5", password),
-    )
-
-  private fun mapRowToUser(row: Row): User =
-    User(
-      email = row.get("email", String::class.java)!!,
-      userName = row.get("user_name", String::class.java)!!,
-      password = row.get("password", String::class.java)!!,
-      bio = row.get("bio", String::class.java),
-      image = row.get("image", String::class.java),
-      token = row.get("token", String::class.java),
-      createdAt = Instant.parse(row.get("created_at", String::class.java)!!),
-      updatedAt = Instant.parse(row.get("updated_at", String::class.java)!!),
     )
 }

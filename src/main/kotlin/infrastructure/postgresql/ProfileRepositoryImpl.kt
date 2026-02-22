@@ -18,10 +18,7 @@ class ProfileRepositoryImpl : ProfileRepository {
         u.user_name,
         u.bio,
         u.image,
-        CASE
-          WHEN f.follower_email IS NOT NULL THEN TRUE
-          ELSE FALSE
-        END AS following
+        (f.follower_email IS NOT NULL)::boolean AS following
       FROM
         public.user u
       LEFT JOIN public.follow f ON
@@ -30,7 +27,7 @@ class ProfileRepositoryImpl : ProfileRepository {
       WHERE
         u.user_name = $1
       """.trimIndent(),
-      ::mapRowToProfile,
+      { row -> mapRow<Profile>(row) },
       Parameter("$1", username),
       Parameter("$2", currentUserEmail),
     )
@@ -67,7 +64,7 @@ class ProfileRepositoryImpl : ProfileRepository {
       WHERE
         u.user_name = $1
       """.trimIndent(),
-      ::mapRowToProfile,
+      { row -> mapRow<Profile>(row) },
       Parameter("$1", followeeUsername),
     )
   }
@@ -104,16 +101,8 @@ class ProfileRepositoryImpl : ProfileRepository {
       WHERE
         u.user_name = $1
       """.trimIndent(),
-      ::mapRowToProfile,
+      { row -> mapRow<Profile>(row) },
       Parameter("$1", followeeUsername),
     )
   }
-
-  private fun mapRowToProfile(row: Row): Profile =
-    Profile(
-      userName = row.get("user_name", String::class.java)!!,
-      bio = row.get("bio", String::class.java),
-      image = row.get("image", String::class.java),
-      following = row.get("following", Boolean::class.java)!!,
-    )
 }
