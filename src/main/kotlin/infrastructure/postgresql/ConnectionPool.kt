@@ -26,11 +26,13 @@ object ConnectionPool {
       ConnectionPoolConfiguration
         .builder()
         .connectionFactory(connectionFactory)
-        .maxSize(20)
-        .initialSize(5)
-        .maxIdleTime(java.time.Duration.ofMinutes(10))
-        .maxLifeTime(java.time.Duration.ofHours(1))
-        .maxAcquireTime(java.time.Duration.ofSeconds(3))
+        .maxSize(10)
+        .initialSize(2)
+        .maxIdleTime(java.time.Duration.ofMinutes(5))
+        .maxLifeTime(java.time.Duration.ofMinutes(30))
+        .maxAcquireTime(java.time.Duration.ofSeconds(10))
+        .maxCreateConnectionTime(java.time.Duration.ofSeconds(5))
+        .validationQuery("SELECT 1")
         .build()
 
     pool = ConnectionPool(connectionPoolConfig)
